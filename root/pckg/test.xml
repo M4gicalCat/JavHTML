@@ -1,0 +1,14 @@
+<file name="index">
+    <class name="index" visibility="public">
+        <!-- after a declaration, if no <params> tag has been found, it is a variable, else it is a method -->
+        <main visibility="public" static="true" type="void">
+            <params>
+                <args type="String[]"/>
+            </params>
+            <System.out.println>
+                <variable name="args" />
+            </System.out.println>
+        </main>
+    </class>
+    <!-- <toto></toto>-->
+</file>
