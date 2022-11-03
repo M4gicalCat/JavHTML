@@ -2,5 +2,9 @@ export default [
     'file',
     'class',
     'params',
-    'variable',
+    'if',
+    'for',
+    'while',
+    'switch',
+    'case',
 ];

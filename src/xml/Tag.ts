@@ -1,11 +1,17 @@
 export default class Tag {
     private readonly _name: string;
+
+    private _innerText: string;
     private _props: Map<string, string>;
     private readonly _children: Tag[];
+
+    private _parent: Tag | null;
     private constructor(name: string, props: Map<string, string>, children: Tag[]) {
         this._name = name;
         this._props = props;
         this._children = children;
+        this._innerText = "";
+        this._parent = null;
     }
 
     public static create(from: string): Tag | null {
@@ -13,10 +19,15 @@ export default class Tag {
         // " or '
         let stringChar = "";
         let isComment = false;
+        let isTag = false;
+        let closingIndex = Infinity;
 
-        let propName = "";
-        let propValue = "";
         for (let i = 0; i < from.length; i++) {
+            if (i > closingIndex) isTag = false;
+            const char = from.at(i);
+            if (char === undefined) continue;
+            const lastTag = tags.at(-1);
+            if (lastTag && !isTag && !isComment && (stringChar || char !== "<")) lastTag.tag._innerText += char;
             // commented
             if (isComment && from.substring(i, i + 3) !== "-->") {
                 i = from.indexOf("-->", i) - 1;
@@ -31,8 +42,6 @@ export default class Tag {
                 i+= 3;
                 continue;
             }
-            const char = from.at(i);
-            if (char === undefined) continue;
             // in a string => useless
             if (stringChar && char !== stringChar) continue;
             //end of string
@@ -47,14 +56,18 @@ export default class Tag {
             }
 
             if (char === "<") {
+                isTag = true;
                 const indexOfSpace = from.indexOf(" ", i);
                 const indexOfChevron = from.indexOf(">", i);
                 const indexOfEndTag = from.indexOf("/>", i);
-                const name = from.substring(i + 1, Math.min(indexOfSpace === -1 ? Infinity : indexOfSpace, indexOfChevron === -1 ? Infinity : indexOfChevron, indexOfEndTag === -1 ? Infinity : indexOfEndTag));
+                closingIndex = Math.min(indexOfSpace === -1 ? Infinity : indexOfSpace, indexOfChevron === -1 ? Infinity : indexOfChevron, indexOfEndTag === -1 ? Infinity : indexOfEndTag);
+                const name = from.substring(i + 1, closingIndex);
+                closingIndex = indexOfChevron;
                 tags.push({tag: new Tag(name, new Map(), []), closed: false, startIndex: i, endIndex: indexOfChevron});
                 i += name.length -1;
             }
             if (from.substring(i, i + 2) === "/>") {
+                isTag = false;
                 const unclosedTag = tags.at(-1);
                 if (unclosedTag) unclosedTag.closed = true;
             }
@@ -63,6 +76,9 @@ export default class Tag {
         return Tag.getTag(tags);
     }
 
+    /**
+    * returns a tree of tags
+    */
     public static getTag(tags: { tag: Tag, closed: boolean }[]): Tag | null {
         let tag = null;
         const currents = [];
@@ -101,6 +117,13 @@ export default class Tag {
         return tag;
     }
 
+    public instantiateParents(): void {
+        for (const child of this.children) {
+            child.parent = this;
+            child.instantiateParents();
+        }
+    }
+
     private static getProps(tag: { tag: Tag, startIndex: number, endIndex: number }, from: string): void {
         let str = from.substring(tag.startIndex, tag.endIndex + 1);
         const index = str.indexOf(" ");
@@ -122,7 +145,6 @@ export default class Tag {
         }
     }
 
-
     get name(): string {
         return this._name;
     }
@@ -133,5 +155,18 @@ export default class Tag {
 
     get children(): Tag[] {
         return this._children;
+    }
+
+    get innerText(): string {
+        return this._innerText;
+    }
+
+    get parent(): Tag | null {
+        return this._parent;
+    }
+
+    set parent(parent: Tag | null) {
+        if (parent === this) return;
+        this._parent = parent;
     }
 }

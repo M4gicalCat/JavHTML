@@ -1,5 +1,6 @@
-import {existsSync, mkdirSync, rmSync} from "fs";
+import {existsSync, mkdirSync, rmSync, writeFileSync} from "fs";
 import Tag from "./xml/Tag";
+import reservedKeywords from "./Reserved";
 
 export default class Compiler {
     private readonly files: (string | [])[];
@@ -13,11 +14,10 @@ export default class Compiler {
             rmSync(outDir, {recursive: true});
         } catch (e) {}
         if (!existsSync(outDir)) mkdirSync(outDir);
-        this.readDir(files);
-        process.exit(0);
+        this.readDir();
     }
 
-    readDir(files: (string | [])[]) {
+    readDir(files = this.files) {
         const path = (files.splice(0, 1).at(0) as string).replace(".", "").replace("/", "");
         if (!existsSync(`${this.outDir}/${path}`)) mkdirSync(`${this.outDir}/${path}`);
         for (const file of files) {
@@ -32,14 +32,76 @@ export default class Compiler {
     }
 
     createFile(tag: Tag, path: string) {
+        console.log(path);
+        tag.instantiateParents();
         const name = tag.props.get("name");
         if (!name) return;
         const fileName = `${path}/${name.endsWith(".java") ? name : `${name}.java`}`;
         const payload = this.createJavaFile(tag);
+        writeFileSync(fileName, payload);
     }
 
     createJavaFile(tag: Tag): string {
         let string = "";
-        // todo create the java string from the tags, recursively
+        let endString = "";
+        let needChildren = true;
+        /* First part of the job, creates whatever the tag displays */
+
+        switch (tag.name) {
+            case 'class':
+                string += `${`${tag.props.get("visibility")} ` ?? ""}class ${tag.props.get("name")} {\n`;
+                endString = "}\n";
+                break;
+            case 'file':
+            case 'if':
+            case 'for':
+            case 'while':
+            case 'switch':
+            case 'case':
+                break;
+            default:
+                let parent = tag;
+                let isInMethod = false;
+                while (parent.parent && !isInMethod) {
+                    parent = parent.parent;
+                    console.log(parent.name);
+                    isInMethod = reservedKeywords.indexOf(parent.name) === -1;
+                }
+                // is a variable inside a method
+                if (isInMethod) {
+                    if (!!tag.props.get('type')) {
+                        string += `${tag.props.get('type')} ${tag.name}`;
+                        // method parameter
+                        if (tag.parent?.name === "params") {
+                            string += (tag.parent?.children.at(-1) === tag ? ") {\n" : ', ');
+                        // variable declaration
+                        } else {
+                            string += ` = ${tag.innerText};\n`;
+                        }
+                    } else if (!reservedKeywords.includes(tag.name)){
+                        if (tag.children.length === 0 && tag.parent?.name !== "params") {
+                            // already declared variable, but reassigned
+                            string += `${tag.name} = ${tag.innerText}`;
+                        } else {
+                            // method call
+                            string += `${tag.name}(${tag.children.map(child => child.name).join(", ")});\n`;
+                            needChildren = false;
+                        }
+                    }
+                }
+                // method declaration
+                else if (tag.children[0]?.name === "params") {
+                    string += `${`${tag.props.get("visibility")} ` ?? ""}${tag.props.get("static") === "true" ? "static " : ''}${tag.props.get("type") ?? "void "} ${tag.name}(`;
+                    if (tag.children[0].children.length === 0) string += ") {\n";
+                    endString = "}\n";
+                }
+        }
+
+        /* Displays the tag's children, if any */
+        if (needChildren) for (const child of tag.children) string += this.createJavaFile(child);
+
+        /* Displays the end of the tag, mainly curly braces */
+        string += endString;
+        return string;
     }
 }
