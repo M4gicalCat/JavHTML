@@ -28,7 +28,7 @@ export default class Tag {
       const char = from.at(i);
       if (char === undefined) continue;
       const lastTag = tags.at(-1);
-      if (lastTag && !isTag && !isComment && (stringChar || char !== "<")) lastTag.tag._innerText += char;
+      if (lastTag &&!lastTag.closed && !isTag && !isComment && (stringChar || char !== "<")) lastTag.tag._innerText += char;
       // commented
       if (isComment && from.substring(i, i + 3) !== "-->") {
         i = from.indexOf("-->", i) - 1;
@@ -146,7 +146,14 @@ export default class Tag {
     }
   }
 
-  get name(): string {
+  public toJava(): string {
+        let string = "";
+        switch(this._name) {
+
+        }
+
+        return string;
+    }get name(): string {
     return this._name;
   }
 

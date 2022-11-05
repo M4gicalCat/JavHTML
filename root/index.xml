@@ -1,3 +1,25 @@
-<file>
+<file name="index.java">
 
+    <class name="Index" visibility="public">
+        <main visibility="public" static="true" type="void">
+            <params>
+                <args type="String[]" />
+            </params>
+            <System.out.println>
+                <test>
+                    <args/>
+                </test>
+            </System.out.println>
+        </main>
+        <test visibility="private" static="true" type="int">
+            <params>
+                <tableau type="String[]" />
+            </params>
+            <return>
+                <tableau.length>
+                <params />
+                </tableau.length>
+            </return>
+        </test>
+    </class>
 </file>

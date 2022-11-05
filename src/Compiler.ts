@@ -71,22 +71,26 @@ export default class Compiler {
                 if (isInMethod) {
                     if (!!tag.props.get('type')) {
                         string += `${tag.props.get('type')} ${tag.name}`;
-                        // method parameter
+                        // method declaration parameter
                         if (tag.parent?.name === "params") {
                             string += (tag.parent?.children.at(-1) === tag ? ") {\n" : ', ');
                         // variable declaration
                         } else {
                             string += ` = ${tag.innerText};\n`;
                         }
-                    } else if (!reservedKeywords.includes(tag.name)){
-                        if (tag.children.length === 0 && tag.parent?.name !== "params") {
+                    } else if (!reservedKeywords.includes(tag.name)) {
+                        // warning : variable = function();
+                        if (tag.children.length === 0 && tag.parent?.name !== "params" && tag.innerText.length !== 0) {
                             // already declared variable, but reassigned
                             string += `${tag.name} = ${tag.innerText}`;
                         } else {
                             // method call
-                            string += `${tag.name}(${tag.children.map(child => child.name).join(", ")});\n`;
+                            string += `${tag.name}(${tag.children.map(child => !reservedKeywords.includes(child.name) && this.createJavaFile(child)).filter(i => i).join(", ")});\n`;
                             needChildren = false;
                         }
+                    } else if (tag.name === "return") {
+                        string += "return ";
+                        endString = ";\n";
                     }
                 }
                 // method declaration
@@ -100,7 +104,8 @@ export default class Compiler {
         /* Displays the tag's children, if any */
         if (needChildren) for (const child of tag.children) string += this.createJavaFile(child);
 
-        /* Displays the end of the tag, mainly curly braces */
+        /* Displays the end of the tag */
+        if (endString.startsWith(";") && string.trimEnd().endsWith(";")) endString = endString.substring(1);
         string += endString;
         return string;
     }
