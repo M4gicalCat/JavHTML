@@ -1,30 +1,29 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Tag = /** @class */ (function () {
     function Tag(name, props, children) {
         this._name = name;
         this._props = props;
         this._children = children;
+        this._innerText = "";
+        this._parent = null;
     }
     Tag.create = function (from) {
         var tags = [];
         // " or '
         var stringChar = "";
         var isComment = false;
-        var propName = "";
-        var propValue = "";
+        var isTag = false;
+        var closingIndex = Infinity;
         for (var i = 0; i < from.length; i++) {
+            if (i > closingIndex)
+                isTag = false;
+            var char = from.at(i);
+            if (char === undefined)
+                continue;
+            var lastTag = tags.at(-1);
+            if (lastTag && !lastTag.closed && !isTag && !isComment && (stringChar || char !== "<"))
+                lastTag.tag._innerText += char;
             // commented
             if (isComment && from.substring(i, i + 3) !== "-->") {
                 i = from.indexOf("-->", i) - 1;
@@ -39,9 +38,6 @@ var Tag = /** @class */ (function () {
                 i += 3;
                 continue;
             }
-            var char = from.at(i);
-            if (char === undefined)
-                continue;
             // in a string => useless
             if (stringChar && char !== stringChar)
                 continue;
@@ -56,14 +52,18 @@ var Tag = /** @class */ (function () {
                 continue;
             }
             if (char === "<") {
+                isTag = true;
                 var indexOfSpace = from.indexOf(" ", i);
                 var indexOfChevron = from.indexOf(">", i);
                 var indexOfEndTag = from.indexOf("/>", i);
-                var name_1 = from.substring(i + 1, Math.min(indexOfSpace === -1 ? Infinity : indexOfSpace, indexOfChevron === -1 ? Infinity : indexOfChevron, indexOfEndTag === -1 ? Infinity : indexOfEndTag));
-                tags.push({ tag: new Tag(name_1, {}, []), closed: false, startIndex: i, endIndex: indexOfChevron });
+                closingIndex = Math.min(indexOfSpace === -1 ? Infinity : indexOfSpace, indexOfChevron === -1 ? Infinity : indexOfChevron, indexOfEndTag === -1 ? Infinity : indexOfEndTag);
+                var name_1 = from.substring(i + 1, closingIndex);
+                closingIndex = indexOfChevron;
+                tags.push({ tag: new Tag(name_1, new Map(), []), closed: false, startIndex: i, endIndex: indexOfChevron });
                 i += name_1.length - 1;
             }
             if (from.substring(i, i + 2) === "/>") {
+                isTag = false;
                 var unclosedTag = tags.at(-1);
                 if (unclosedTag)
                     unclosedTag.closed = true;
@@ -76,6 +76,9 @@ var Tag = /** @class */ (function () {
         }
         return Tag.getTag(tags);
     };
+    /**
+    * returns a tree of tags
+    */
     Tag.getTag = function (tags) {
         var _a;
         var tag = null;
@@ -117,8 +120,14 @@ var Tag = /** @class */ (function () {
         }
         return tag;
     };
+    Tag.prototype.instantiateParents = function () {
+        for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
+            var child = _a[_i];
+            child.parent = this;
+            child.instantiateParents();
+        }
+    };
     Tag.getProps = function (tag, from) {
-        var _a;
         var str = from.substring(tag.startIndex, tag.endIndex + 1);
         var index = str.indexOf(" ");
         if (index === -1)
@@ -135,7 +144,7 @@ var Tag = /** @class */ (function () {
             for (; i < str.length && str.at(i) !== stringChar; i++) {
                 value += str.at(i);
             }
-            tag.tag._props = __assign(__assign({}, tag.tag._props), (_a = {}, _a[name_3] = value, _a));
+            tag.tag._props.set(name_3, value);
             str = str.substring(i + 1).trim();
         }
     };
@@ -143,21 +152,40 @@ var Tag = /** @class */ (function () {
         get: function () {
             return this._name;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Object.defineProperty(Tag.prototype, "props", {
         get: function () {
             return this._props;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Object.defineProperty(Tag.prototype, "children", {
         get: function () {
             return this._children;
         },
-        enumerable: true,
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Tag.prototype, "innerText", {
+        get: function () {
+            return this._innerText;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Tag.prototype, "parent", {
+        get: function () {
+            return this._parent;
+        },
+        set: function (parent) {
+            if (parent === this)
+                return;
+            this._parent = parent;
+        },
+        enumerable: false,
         configurable: true
     });
     return Tag;

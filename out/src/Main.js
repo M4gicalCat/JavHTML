@@ -13,14 +13,14 @@ new Compiler_1.default(dir);
 function readRecursive(path) {
     var arr = [];
     arr.push(path);
-    var files = fs_1.readdirSync(path);
+    var files = (0, fs_1.readdirSync)(path);
     for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
         var file = files_1[_i];
-        if (fs_1.lstatSync(path + "/" + file).isDirectory()) {
-            arr.push(readRecursive(path + "/" + file));
+        if ((0, fs_1.lstatSync)("".concat(path, "/").concat(file)).isDirectory()) {
+            arr.push(readRecursive("".concat(path, "/").concat(file)));
         }
         else if (file.endsWith(".xml")) {
-            arr.push(fs_1.readFileSync(path + "/" + file, { encoding: "utf-8" }));
+            arr.push((0, fs_1.readFileSync)("".concat(path, "/").concat(file), { encoding: "utf-8" }));
         }
     }
     return arr;

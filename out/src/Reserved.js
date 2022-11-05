@@ -4,5 +4,10 @@ exports.default = [
     'file',
     'class',
     'params',
-    'variable',
+    'return',
+    'if',
+    'for',
+    'while',
+    'switch',
+    'case',
 ];
