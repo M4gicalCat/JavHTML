@@ -1,10 +1,10 @@
 export default [
-    'file',
-    'class',
-    'params',
-    'if',
-    'for',
-    'while',
-    'switch',
-    'case',
+  'file',
+  'class',
+  'params',
+  'if',
+  'for',
+  'while',
+  'switch',
+  'case',
 ];
