@@ -15,7 +15,8 @@ var Compiler = /** @class */ (function () {
         try {
             (0, fs_1.rmSync)(outDir, { recursive: true });
         }
-        catch (e) { }
+        catch (e) {
+        }
         if (!(0, fs_1.existsSync)(outDir))
             (0, fs_1.mkdirSync)(outDir);
         this.readDir();
@@ -38,13 +39,14 @@ var Compiler = /** @class */ (function () {
         }
     };
     Compiler.prototype.createFile = function (tag, path) {
-        console.log(path);
         tag.instantiateParents();
         var name = tag.props.get("name");
         if (!name)
             return;
         var fileName = "".concat(path, "/").concat(name.endsWith(".java") ? name : "".concat(name, ".java"));
-        var payload = this.createJavaFile(tag);
+        var payload = tag.toJava({
+            inMethod: false,
+        });
         (0, fs_1.writeFileSync)(fileName, payload);
     };
     Compiler.prototype.createJavaFile = function (tag) {

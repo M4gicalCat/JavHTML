@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Tag = /** @class */ (function () {
     function Tag(name, props, children) {
@@ -77,8 +88,8 @@ var Tag = /** @class */ (function () {
         return Tag.getTag(tags);
     };
     /**
-    * returns a tree of tags
-    */
+     * returns a tree of tags
+     */
     Tag.getTag = function (tags) {
         var _a;
         var tag = null;
@@ -147,6 +158,70 @@ var Tag = /** @class */ (function () {
             tag.tag._props.set(name_3, value);
             str = str.substring(i + 1).trim();
         }
+    };
+    Tag.prototype.toJava = function (options) {
+        switch (this._name) {
+            case 'class':
+                return this.getClassToJava();
+            case 'file':
+                return this._children.map(function (c) { return c.toJava(__assign({}, options)); }).join("\n");
+            default:
+                return "";
+        }
+    };
+    Tag.prototype.getClassToJava = function () {
+        var _a;
+        var string = "".concat((_a = "".concat(this._props.get("visibility"), " ")) !== null && _a !== void 0 ? _a : "", "class ").concat(this._props.get("name"), " {\n");
+        // class variables
+        var paramsParentIndex = this._children.findIndex(function (c) { return c.name === "params"; });
+        if (paramsParentIndex !== -1) {
+            var tag = this._children.splice(paramsParentIndex, 1)[0];
+            for (var _i = 0, _b = tag.children; _i < _b.length; _i++) {
+                var child = _b[_i];
+                string += child.getVariableDefinitionToJava();
+            }
+        }
+        // class body
+        string += this._children.map(function (c) { return c.getMethodDefinitionToJava(); }).join("\n");
+        return string + "}";
+    };
+    Tag.prototype.getVariableDefinitionToJava = function () {
+        return "".concat(this._props.get('type'), " ").concat(this._name, " = ").concat(this._innerText, ";\n");
+    };
+    Tag.prototype.getMethodDefinitionToJava = function () {
+        var _a, _b;
+        var visibility = this._props.get("visibility");
+        if (visibility)
+            visibility += " ";
+        var str = "".concat(visibility).concat(this._props.get("static") === "true" ? "static " : "").concat((_a = this._props.get("type")) !== null && _a !== void 0 ? _a : "", " ").concat(this._name);
+        str += "(";
+        if (((_b = this._children[0]) === null || _b === void 0 ? void 0 : _b.name) === "params")
+            str += this._children.splice(0, 1)[0]._children.map(function (c) { return c.getMethodParameterDefinitionJava(); }).join(", ");
+        str += ") {\n";
+        str += this._children.map(function (c) { return c.getMethodBodyJava({}); }).join("\n");
+        return str + "\n}\n";
+    };
+    Tag.prototype.getMethodParameterDefinitionJava = function () {
+        return this._props.get("type") + " " + this._name;
+    };
+    Tag.prototype.getMethodBodyJava = function (_a) {
+        var _b = _a.end, end = _b === void 0 ? ";\n" : _b;
+        if (this._name === "return") {
+            return "return " + this._children[0].getMethodBodyJava({ end: "" }) + end;
+        }
+        if (this.children.length === 0) {
+            return this.variableCallJava();
+        }
+        if (this._children[0]._name === "params")
+            return this.getMethodCallJava() + end;
+        return this.getVariableDefinitionToJava();
+    };
+    Tag.prototype.getMethodCallJava = function () {
+        var _a;
+        return "".concat(this._name, "(").concat((_a = this.children[0]._children) === null || _a === void 0 ? void 0 : _a.map(function (c) { return c.getMethodBodyJava({ end: "" }); }).join(", "), ")");
+    };
+    Tag.prototype.variableCallJava = function () {
+        return this._name;
     };
     Object.defineProperty(Tag.prototype, "name", {
         get: function () {

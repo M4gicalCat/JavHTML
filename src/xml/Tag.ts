@@ -1,3 +1,5 @@
+import {toJavaOptions} from "../types/toJavaOptions";
+
 export default class Tag {
   private readonly _name: string;
 
@@ -28,7 +30,7 @@ export default class Tag {
       const char = from.at(i);
       if (char === undefined) continue;
       const lastTag = tags.at(-1);
-      if (lastTag &&!lastTag.closed && !isTag && !isComment && (stringChar || char !== "<")) lastTag.tag._innerText += char;
+      if (lastTag && !lastTag.closed && !isTag && !isComment && (stringChar || char !== "<")) lastTag.tag._innerText += char;
       // commented
       if (isComment && from.substring(i, i + 3) !== "-->") {
         i = from.indexOf("-->", i) - 1;
@@ -146,14 +148,74 @@ export default class Tag {
     }
   }
 
-  public toJava(): string {
-        let string = "";
-        switch(this._name) {
+  public toJava(options: toJavaOptions): string {
+    switch (this._name) {
+      case 'class':
+        return this.getClassToJava();
+      case 'file':
+        return this._children.map(c => c.toJava({...options})).join("\n");
+      default:
+        return "";
+    }
+  }
 
-        }
+  private getClassToJava(): string {
+    let string = `${`${this._props.get("visibility")} ` ?? ""}class ${this._props.get("name")} {\n`;
 
-        return string;
-    }get name(): string {
+    // class variables
+    const paramsParentIndex = this._children.findIndex(c => c.name === "params");
+    if (paramsParentIndex !== -1) {
+      const tag = this._children.splice(paramsParentIndex, 1)[0];
+      for (const child of tag.children) {
+        string += child.getVariableDefinitionToJava();
+      }
+    }
+
+    // class body
+    string += this._children.map(c => c.getMethodDefinitionToJava()).join("\n");
+
+    return string + "}";
+  }
+
+  private getVariableDefinitionToJava(): string {
+    return `${this._props.get('type')} ${this._name}${this._innerText.length > 0 ? ` = ${this._innerText}` : ""};\n`;
+  }
+
+  private getMethodDefinitionToJava() {
+    let visibility = this._props.get("visibility");
+    if (visibility) visibility += " ";
+    let str = `${visibility}${this._props.get("static") === "true" ? "static " : ""}${this._props.get("type") ?? ""} ${this._name}`;
+    str += "(";
+    if (this._children[0]?.name === "params") str += this._children.splice(0, 1)[0]._children.map(c => c.getMethodParameterDefinitionJava()).join(", ");
+    str += ") {\n";
+    str += this._children.map(c => c.getMethodBodyJava({})).join("\n");
+    return str + "\n}\n";
+  }
+
+  private getMethodParameterDefinitionJava() {
+    return this._props.get("type") + " " + this._name;
+  }
+
+  private getMethodBodyJava({end = ";\n"}): string {
+    if (this._name === "return") {
+      return "return " + this._children[0].getMethodBodyJava({end: ""}) + end;
+    }
+    if (this.children.length === 0) {
+      return this._props.get("type") ? this.getVariableDefinitionToJava() : this.variableCallJava();
+    }
+    if (this._children[0]._name === "params") return this.getMethodCallJava() + end;
+    return this.getVariableDefinitionToJava();
+  }
+
+  private getMethodCallJava(): string {
+    return `${this._name}(${this.children[0]._children?.map(c => c.getMethodBodyJava({end: ""})).join(", ")})`;
+  }
+
+  private variableCallJava() {
+    return this._name;
+  }
+
+  get name(): string {
     return this._name;
   }
 

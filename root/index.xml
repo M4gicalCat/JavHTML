@@ -1,14 +1,21 @@
 <file name="index.java">
 
     <class name="Index" visibility="public">
+        <params>
+            <!-- class's variables -->
+        </params>
         <main visibility="public" static="true" type="void">
             <params>
                 <args type="String[]" />
             </params>
             <System.out.println>
-                <test>
-                    <args/>
-                </test>
+                <params>
+                    <test>
+                        <params>
+                            <args/>
+                        </params>
+                    </test>
+                </params>
             </System.out.println>
         </main>
         <test visibility="private" static="true" type="int">
@@ -17,7 +24,6 @@
             </params>
             <return>
                 <tableau.length>
-                <params />
                 </tableau.length>
             </return>
         </test>
