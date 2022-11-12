@@ -186,7 +186,7 @@ var Tag = /** @class */ (function () {
         return string + "}";
     };
     Tag.prototype.getVariableDefinitionToJava = function () {
-        return "".concat(this._props.get('type'), " ").concat(this._name, " = ").concat(this._innerText, ";\n");
+        return "".concat(this._props.get('type'), " ").concat(this._name).concat(this._innerText.length > 0 ? " = ".concat(this._innerText) : "", ";\n");
     };
     Tag.prototype.getMethodDefinitionToJava = function () {
         var _a, _b;
@@ -210,7 +210,7 @@ var Tag = /** @class */ (function () {
             return "return " + this._children[0].getMethodBodyJava({ end: "" }) + end;
         }
         if (this.children.length === 0) {
-            return this.variableCallJava();
+            return this._props.get("type") ? this.getVariableDefinitionToJava() : this.variableCallJava();
         }
         if (this._children[0]._name === "params")
             return this.getMethodCallJava() + end;

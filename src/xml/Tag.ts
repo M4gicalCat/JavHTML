@@ -201,17 +201,24 @@ export default class Tag {
       return "return " + this._children[0].getMethodBodyJava({end: ""}) + end;
     }
     if (this.children.length === 0) {
-      return this._props.get("type") ? this.getVariableDefinitionToJava() : this.variableCallJava();
+      if (this._props.get("type")) return this.getVariableDefinitionToJava();
+      if (this._innerText.trim().length === 0) return this.getVariableCallJava();
+      // variable reassign
+      return this.getVariableReassignationJava({end});
     }
     if (this._children[0]._name === "params") return this.getMethodCallJava() + end;
     return this.getVariableDefinitionToJava();
+  }
+
+  private getVariableReassignationJava({end = ";\n"}): string {
+    return `${this._name} = ${this._innerText}${end}`;
   }
 
   private getMethodCallJava(): string {
     return `${this._name}(${this.children[0]._children?.map(c => c.getMethodBodyJava({end: ""})).join(", ")})`;
   }
 
-  private variableCallJava() {
+  private getVariableCallJava() {
     return this._name;
   }
 

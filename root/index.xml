@@ -2,30 +2,18 @@
 
     <class name="Index" visibility="public">
         <params>
-            <!-- class's variables -->
+            <myVariable static="true" type="int">42</myVariable>
         </params>
         <main visibility="public" static="true" type="void">
             <params>
                 <args type="String[]" />
             </params>
+            <hw type="String">"Hello world"</hw>
             <System.out.println>
                 <params>
-                    <test>
-                        <params>
-                            <args/>
-                        </params>
-                    </test>
+                    <hw />
                 </params>
             </System.out.println>
         </main>
-        <test visibility="private" static="true" type="int">
-            <params>
-                <tableau type="String[]" />
-            </params>
-            <return>
-                <tableau.length>
-                </tableau.length>
-            </return>
-        </test>
     </class>
 </file>
