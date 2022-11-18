@@ -163,13 +163,14 @@ export default class Tag {
   }
 
   private getClassToJava(): string {
+    const isAbstract = this._props.get("abstract") === "true";
     let visibility = this._props.get("visibility");
     visibility = visibility ? visibility + " " : "";
     let _extends = this._props.get("extends");
     _extends = _extends ? " extends " + _extends + " " : "";
     let _implements = this._props.get("implements");
     _implements = _implements ? "implements " + _implements + " " : "";
-    let string = `${visibility}${this._name} ${this._props.get("name")}${_extends}${_implements} {\n`;
+    let string = `${visibility}${isAbstract ? "abstract " : ""}${this._name} ${this._props.get("name")}${_extends}${_implements} {\n`;
 
     // class variables
     const paramsParentIndex = this._children.findIndex(c => c.name === "params");
@@ -197,9 +198,11 @@ export default class Tag {
   }
 
   private getMethodDefinitionToJava() {
+    // check if the method is abstract or not
+    const isAbstract = this._props.get("abstract") === "true";
     let visibility = this._props.get("visibility");
     if (visibility) visibility += " ";
-    let str = `${visibility}${this._props.get("static") === "true" ? "static " : ""}${this._props.get("type") ?? ""} ${this._name}`;
+    let str = `${visibility}${this._props.get("static") === "true" ? "static " : ""}${this._props.get("type") ?? ""} ${isAbstract ? "abstract " : ""} ${this._name}`;
     str += "(";
     if (this._children[0]?.name === "params") str += this._children.splice(0, 1)[0]._children.map(c => c.getMethodParameterDefinitionJava()).join(", ");
     str += ") {\n";
