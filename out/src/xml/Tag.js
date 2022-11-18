@@ -162,6 +162,7 @@ var Tag = /** @class */ (function () {
     Tag.prototype.toJava = function (options) {
         switch (this._name) {
             case 'class':
+            case 'interface':
                 return this.getClassToJava();
             case 'file':
                 return this.addTabs(this._children.map(function (c) { return c.toJava(__assign({}, options)); }).join("\n"));
@@ -172,14 +173,19 @@ var Tag = /** @class */ (function () {
         }
     };
     Tag.prototype.getClassToJava = function () {
-        var _a;
-        var string = "".concat((_a = "".concat(this._props.get("visibility"), " ")) !== null && _a !== void 0 ? _a : "", "class ").concat(this._props.get("name"), " {\n");
+        var visibility = this._props.get("visibility");
+        visibility = visibility ? visibility + " " : "";
+        var _extends = this._props.get("extends");
+        _extends = _extends ? " extends " + _extends + " " : "";
+        var _implements = this._props.get("implements");
+        _implements = _implements ? "implements " + _implements + " " : "";
+        var string = "".concat(visibility).concat(this._name, " ").concat(this._props.get("name")).concat(_extends).concat(_implements, " {\n");
         // class variables
         var paramsParentIndex = this._children.findIndex(function (c) { return c.name === "params"; });
         if (paramsParentIndex !== -1) {
             var tag = this._children.splice(paramsParentIndex, 1)[0];
-            for (var _i = 0, _b = tag.children; _i < _b.length; _i++) {
-                var child = _b[_i];
+            for (var _i = 0, _a = tag.children; _i < _a.length; _i++) {
+                var child = _a[_i];
                 string += child.getVariableDefinitionToJava();
             }
         }
@@ -188,7 +194,13 @@ var Tag = /** @class */ (function () {
         return string + "}";
     };
     Tag.prototype.getVariableDefinitionToJava = function () {
-        return "".concat(this._props.get('type'), " ").concat(this._name).concat(this._innerText.length > 0 ? " = ".concat(this._innerText) : "", ";\n");
+        var type = this._props.get("type");
+        type = type ? type + " " : "";
+        var isFinal = this._props.get("final") === "true";
+        var isStatic = this._props.get("static") === "true";
+        var visibility = this._props.get("visibility");
+        visibility = visibility ? visibility + " " : "";
+        return "".concat(visibility).concat(type).concat(isFinal ? "final " : "").concat(isStatic ? "static " : "").concat(this._name).concat(this._innerText.length > 0 ? " = ".concat(this._innerText) : "", ";\n");
     };
     Tag.prototype.getMethodDefinitionToJava = function () {
         var _a, _b;
@@ -258,7 +270,6 @@ var Tag = /** @class */ (function () {
     };
     Tag.prototype.getNewToJava = function (_a) {
         var _b = _a === void 0 ? {} : _a, _c = _b.end, end = _c === void 0 ? ";\n" : _c;
-        console.log(this);
         return "new ".concat(this._children[0].getMethodCallJava()).concat(end);
     };
     Object.defineProperty(Tag.prototype, "name", {

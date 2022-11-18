@@ -43,9 +43,7 @@ var Compiler = /** @class */ (function () {
         if (!name)
             return;
         var fileName = "".concat(path, "/").concat(name.endsWith(".java") ? name : "".concat(name, ".java"));
-        var payload = tag.toJava({
-            inMethod: false,
-        });
+        var payload = tag.toJava({ end: "" });
         (0, fs_1.writeFileSync)(fileName, payload);
     };
     return Compiler;

@@ -151,6 +151,7 @@ export default class Tag {
   public toJava(options: toJavaOptions): string {
     switch (this._name) {
       case 'class':
+      case 'interface':
         return this.getClassToJava();
       case 'file':
         return this.addTabs(this._children.map(c => c.toJava({...options})).join("\n"));
@@ -162,7 +163,13 @@ export default class Tag {
   }
 
   private getClassToJava(): string {
-    let string = `${`${this._props.get("visibility")} ` ?? ""}class ${this._props.get("name")} {\n`;
+    let visibility = this._props.get("visibility");
+    visibility = visibility ? visibility + " " : "";
+    let _extends = this._props.get("extends");
+    _extends = _extends ? " extends " + _extends + " " : "";
+    let _implements = this._props.get("implements");
+    _implements = _implements ? "implements " + _implements + " " : "";
+    let string = `${visibility}${this._name} ${this._props.get("name")}${_extends}${_implements} {\n`;
 
     // class variables
     const paramsParentIndex = this._children.findIndex(c => c.name === "params");
@@ -183,7 +190,10 @@ export default class Tag {
     let type = this._props.get("type");
     type = type ? type + " " : "";
     const isFinal = this._props.get("final") === "true";
-    return `${type}${isFinal ? "final " : ""}${this._name}${this._innerText.length > 0 ? ` = ${this._innerText}` : ""};\n`;
+    const isStatic = this._props.get("static") === "true";
+    let visibility = this._props.get("visibility");
+    visibility = visibility ? visibility + " " : "";
+    return `${visibility}${type}${isFinal ? "final " : ""}${isStatic ? "static " : ""}${this._name}${this._innerText.length > 0 ? ` = ${this._innerText}` : ""};\n`;
   }
 
   private getMethodDefinitionToJava() {
