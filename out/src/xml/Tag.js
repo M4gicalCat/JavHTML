@@ -166,8 +166,8 @@ var Tag = /** @class */ (function () {
                 return this.getClassToJava();
             case 'file':
                 return this.addTabs(this._children.map(function (c) { return c.toJava(__assign({}, options)); }).join("\n"));
-            case 'new':
-                return this.getNewToJava(options);
+            case 'record':
+                return this.getRecordToJava();
             default:
                 return "";
         }
@@ -271,6 +271,13 @@ var Tag = /** @class */ (function () {
     Tag.prototype.getNewToJava = function (_a) {
         var _b = _a === void 0 ? {} : _a, _c = _b.end, end = _c === void 0 ? ";\n" : _c;
         return "new ".concat(this._children[0].getMethodCallJava()).concat(end);
+    };
+    Tag.prototype.getRecordToJava = function () {
+        var visibility = this._props.get("visibility");
+        visibility = visibility ? visibility + " " : "";
+        var str = "".concat(visibility, "record ").concat(this._props.get("name"), "(").concat(this._children[0]._children.map(function (c) { return c.getMethodParameterDefinitionJava(); }).join(", "), ") {\n");
+        str += this._children.slice(1).map(function (c) { return c.getMethodBodyJava({}); }).join("");
+        return str + "\n}\n";
     };
     Object.defineProperty(Tag.prototype, "name", {
         get: function () {

@@ -1,6 +1,6 @@
-<file name="test">
+<file name="Test">
+<!--
     <class name="Test" visibility="public">
-        <!-- after a declaration, if no <params> tag has been found, it is a variable, else it is a method -->
         <main visibility="public" static="true" type="void">
             <params>
                 <args type="String[]"/>
@@ -11,5 +11,13 @@
             </System.out.println>
         </main>
     </class>
-    <!-- <toto></toto>-->
+-->
+    <record name="Test">
+        <params>
+            <client type="Client"/>
+            <dateDebut type="Date"/>
+            <dateFin type="Date"/>
+            <Film type="Film"/>
+        </params>
+    </record>
 </file>

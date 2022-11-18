@@ -155,8 +155,8 @@ export default class Tag {
         return this.getClassToJava();
       case 'file':
         return this.addTabs(this._children.map(c => c.toJava({...options})).join("\n"));
-      case 'new':
-        return this.getNewToJava(options);
+      case 'record':
+        return this.getRecordToJava();
       default:
         return "";
     }
@@ -259,6 +259,14 @@ export default class Tag {
 
   private getNewToJava({end = ";\n"} = {}): string {
     return `new ${this._children[0].getMethodCallJava()}${end}`;
+  }
+
+  private getRecordToJava(): string {
+    let visibility = this._props.get("visibility");
+    visibility = visibility ? visibility + " " : "";
+    let str = `${visibility}record ${this._props.get("name")}(${this._children[0]._children.map(c => c.getMethodParameterDefinitionJava()).join(", ")}) {\n`;
+    str += this._children.slice(1).map(c => c.getMethodBodyJava({})).join("");
+    return str + "\n}\n";
   }
 
   get name(): string {
