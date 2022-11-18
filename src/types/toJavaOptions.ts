@@ -1,3 +1,3 @@
 export type toJavaOptions = {
-  inMethod: boolean
+  end: string,
 };

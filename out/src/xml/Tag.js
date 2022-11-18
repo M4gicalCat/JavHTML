@@ -164,7 +164,9 @@ var Tag = /** @class */ (function () {
             case 'class':
                 return this.getClassToJava();
             case 'file':
-                return this._children.map(function (c) { return c.toJava(__assign({}, options)); }).join("\n");
+                return this.addTabs(this._children.map(function (c) { return c.toJava(__assign({}, options)); }).join("\n"));
+            case 'new':
+                return this.getNewToJava(options);
             default:
                 return "";
         }
@@ -209,19 +211,55 @@ var Tag = /** @class */ (function () {
         if (this._name === "return") {
             return "return " + this._children[0].getMethodBodyJava({ end: "" }) + end;
         }
+        if (this._name === "new") {
+            return this.getNewToJava({ end: end });
+        }
         if (this.children.length === 0) {
-            return this._props.get("type") ? this.getVariableDefinitionToJava() : this.variableCallJava();
+            if (this._props.get("type"))
+                return this.getVariableDefinitionToJava();
+            if (this._innerText.trim().length === 0)
+                return this.getVariableCallJava();
+            // variable reassign
+            return this.getVariableReassignationJava({ end: end });
         }
         if (this._children[0]._name === "params")
             return this.getMethodCallJava() + end;
         return this.getVariableDefinitionToJava();
     };
+    Tag.prototype.getVariableReassignationJava = function (_a) {
+        var _b = _a.end, end = _b === void 0 ? ";\n" : _b;
+        return "".concat(this._name, " = ").concat(this._innerText).concat(end);
+    };
     Tag.prototype.getMethodCallJava = function () {
         var _a;
         return "".concat(this._name, "(").concat((_a = this.children[0]._children) === null || _a === void 0 ? void 0 : _a.map(function (c) { return c.getMethodBodyJava({ end: "" }); }).join(", "), ")");
     };
-    Tag.prototype.variableCallJava = function () {
+    Tag.prototype.getVariableCallJava = function () {
         return this._name;
+    };
+    Tag.prototype.addTabs = function (str) {
+        var nbOpening = 0, arr = str.split("\n");
+        for (var i = 0; i < arr.length; i++) {
+            var string = arr[i];
+            var tmp = 0;
+            for (var _i = 0, _a = string.split(""); _i < _a.length; _i++) {
+                var char = _a[_i];
+                if (char === "{")
+                    tmp++;
+                if (char === "}")
+                    nbOpening--;
+            }
+            for (var j = 0; j < nbOpening; j++)
+                string = "\t" + string;
+            nbOpening += tmp;
+            arr[i] = string;
+        }
+        return arr.join("\n");
+    };
+    Tag.prototype.getNewToJava = function (_a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.end, end = _c === void 0 ? ";\n" : _c;
+        console.log(this);
+        return "new ".concat(this._children[0].getMethodCallJava()).concat(end);
     };
     Object.defineProperty(Tag.prototype, "name", {
         get: function () {

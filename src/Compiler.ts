@@ -36,9 +36,7 @@ export default class Compiler {
     const name = tag.props.get("name");
     if (!name) return;
     const fileName = `${path}/${name.endsWith(".java") ? name : `${name}.java`}`;
-    const payload = tag.toJava({
-      inMethod: false,
-    });
+    const payload = tag.toJava({end: ""});
     writeFileSync(fileName, payload);
   }
 }

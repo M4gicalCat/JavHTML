@@ -153,7 +153,9 @@ export default class Tag {
       case 'class':
         return this.getClassToJava();
       case 'file':
-        return this._children.map(c => c.toJava({...options})).join("\n");
+        return this.addTabs(this._children.map(c => c.toJava({...options})).join("\n"));
+      case 'new':
+        return this.getNewToJava(options);
       default:
         return "";
     }
@@ -178,7 +180,10 @@ export default class Tag {
   }
 
   private getVariableDefinitionToJava(): string {
-    return `${this._props.get('type')} ${this._name}${this._innerText.length > 0 ? ` = ${this._innerText}` : ""};\n`;
+    let type = this._props.get("type");
+    type = type ? type + " " : "";
+    const isFinal = this._props.get("final") === "true";
+    return `${type}${isFinal ? "final " : ""}${this._name}${this._innerText.length > 0 ? ` = ${this._innerText}` : ""};\n`;
   }
 
   private getMethodDefinitionToJava() {
@@ -200,6 +205,9 @@ export default class Tag {
     if (this._name === "return") {
       return "return " + this._children[0].getMethodBodyJava({end: ""}) + end;
     }
+    if (this._name === "new") {
+      return this.getNewToJava({end});
+    }
     if (this.children.length === 0) {
       if (this._props.get("type")) return this.getVariableDefinitionToJava();
       if (this._innerText.trim().length === 0) return this.getVariableCallJava();
@@ -220,6 +228,27 @@ export default class Tag {
 
   private getVariableCallJava() {
     return this._name;
+  }
+
+  private addTabs(str: string): string {
+    let nbOpening = 0,
+        arr = str.split("\n");
+    for (let i = 0; i < arr.length; i++) {
+      let string = arr[i];
+      let tmp = 0;
+      for (let char of string.split("")) {
+        if (char === "{") tmp++;
+        if (char === "}") nbOpening--;
+      }
+      for (let j = 0; j < nbOpening; j++) string = "\t" + string;
+      nbOpening += tmp;
+      arr[i] = string;
+    }
+    return arr.join("\n");
+  }
+
+  private getNewToJava({end = ";\n"} = {}): string {
+    return `new ${this._children[0].getMethodCallJava()}${end}`;
   }
 
   get name(): string {
