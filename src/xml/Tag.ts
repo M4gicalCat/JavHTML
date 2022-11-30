@@ -228,11 +228,21 @@ export default class Tag {
       return this.getVariableReassignationJava({end});
     }
     if (this._children[0]._name === "params") return this.getMethodCallJava() + end;
-    return this.getVariableDefinitionToJava();
+    return this._props.get("type") ? this.getVariableDefinitionToJava() : this.getVariableReassignationJava({end});
   }
 
   private getVariableReassignationJava({end = ";\n"}): string {
-    return `${this._name} = ${this._innerText}${end}`;
+    if (this.children.length === 0)
+      return `${this._name} = ${this._innerText}${end}`;
+    let string = `${this._name} = `;
+    for (const child of this.children) {
+      if (child.children.length === 0) {
+        string += child.name + child._innerText;
+        continue;
+      }
+      string += child.getMethodCallJava();
+    }
+    return string + end;
   }
 
   private getMethodCallJava(): string {

@@ -173,13 +173,14 @@ var Tag = /** @class */ (function () {
         }
     };
     Tag.prototype.getClassToJava = function () {
+        var isAbstract = this._props.get("abstract") === "true";
         var visibility = this._props.get("visibility");
         visibility = visibility ? visibility + " " : "";
         var _extends = this._props.get("extends");
         _extends = _extends ? " extends " + _extends + " " : "";
         var _implements = this._props.get("implements");
         _implements = _implements ? "implements " + _implements + " " : "";
-        var string = "".concat(visibility).concat(this._name, " ").concat(this._props.get("name")).concat(_extends).concat(_implements, " {\n");
+        var string = "".concat(visibility).concat(isAbstract ? "abstract " : "").concat(this._name, " ").concat(this._props.get("name")).concat(_extends).concat(_implements, " {\n");
         // class variables
         var paramsParentIndex = this._children.findIndex(function (c) { return c.name === "params"; });
         if (paramsParentIndex !== -1) {
@@ -204,10 +205,12 @@ var Tag = /** @class */ (function () {
     };
     Tag.prototype.getMethodDefinitionToJava = function () {
         var _a, _b;
+        // check if the method is abstract or not
+        var isAbstract = this._props.get("abstract") === "true";
         var visibility = this._props.get("visibility");
         if (visibility)
             visibility += " ";
-        var str = "".concat(visibility).concat(this._props.get("static") === "true" ? "static " : "").concat((_a = this._props.get("type")) !== null && _a !== void 0 ? _a : "", " ").concat(this._name);
+        var str = "".concat(visibility).concat(this._props.get("static") === "true" ? "static " : "").concat((_a = this._props.get("type")) !== null && _a !== void 0 ? _a : "", " ").concat(isAbstract ? "abstract " : "", " ").concat(this._name);
         str += "(";
         if (((_b = this._children[0]) === null || _b === void 0 ? void 0 : _b.name) === "params")
             str += this._children.splice(0, 1)[0]._children.map(function (c) { return c.getMethodParameterDefinitionJava(); }).join(", ");
@@ -236,11 +239,23 @@ var Tag = /** @class */ (function () {
         }
         if (this._children[0]._name === "params")
             return this.getMethodCallJava() + end;
-        return this.getVariableDefinitionToJava();
+        return this._props.get("type") ? this.getVariableDefinitionToJava() : this.getVariableReassignationJava({ end: end });
     };
     Tag.prototype.getVariableReassignationJava = function (_a) {
         var _b = _a.end, end = _b === void 0 ? ";\n" : _b;
-        return "".concat(this._name, " = ").concat(this._innerText).concat(end);
+        console.log(this);
+        if (this.children.length === 0)
+            return "".concat(this._name, " = ").concat(this._innerText).concat(end);
+        var string = "".concat(this._name, " = ");
+        for (var _i = 0, _c = this.children; _i < _c.length; _i++) {
+            var child = _c[_i];
+            if (child.children.length === 0) {
+                string += child.name + child._innerText;
+                continue;
+            }
+            string += child.getMethodCallJava();
+        }
+        return string + end;
     };
     Tag.prototype.getMethodCallJava = function () {
         var _a;

@@ -9,6 +9,10 @@
                 <args type="String[]" />
             </params>
             <hw type="String">"Hello world"</hw>
+            <aa type="int">5 + 4</aa>
+            <aa>
+                <aa> + </aa> <aa> * </aa>  <aa> / </aa><aa> - </aa> <aa/>
+            </aa>
             <System.out.println>
                 <params>
                     <hw />

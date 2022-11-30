@@ -60,6 +60,103 @@ And finally some methods :
 ```
 
 # Documentation
--- will come one day ;)
+## File
+```xml
+<file name="filename">
+    <!-- Your code here -->
+</file>
+```
+### props
+- `name` : The name of the file (with or without the extension)
+
+## Class
+```xml
+<class name="classname" visibility="public">
+    <params>
+        <!-- Your variables here -->
+    </params>
+    <!-- Your code here -->
+</class>
+```
+### props
+- `name` : The name of the class
+- `visibility` : `public` | `private` | `protected` : The visibility of the class
+- `extends` : The class that the class extends
+- `implements` : The interfaces that the class implements
+- `abstract` : `true` if the class is abstract
+
+### children
+- `params` : The variables of the class
+- others : The methods of the class
+
+## Method definition
+```xml
+<methodName visibility="public" static="true" type="void">
+    <params>
+        <!-- method parameters here -->
+    </params>
+    <!-- Your code here -->
+</methodName>
+```
+### props
+- `visibility` : `public` | `private` | `protected` : The visibility of the method
+- `static` : `true` if the method is static
+- `type` : The return type of the method
+- `abstract` : `true` if the method is abstract
+
+### children
+- `params` : The parameters of the method
+- others : The code of the method
+
+## Variable definition
+```xml
+<variableName static="true" type="int">42</variableName>
+```
+### props
+- `visibility` : `public` | `private` | `protected` : The visibility of the variable
+- `static` : `true` if the variable is static
+- `type` : The type of the variable
+- `final` : `true` if the variable is final
+### innerText
+- The value of the variable
+
+## Method call
+```xml
+<methodName>
+    <params>
+        <!-- method parameters here -->
+    </params>
+</methodName>
+```
+### children
+- `params` : The parameters of the method
+
+## Variable call
+```xml
+<variableName />
+```
+
+## Operators
+### with non-variable values
+```xml
+<variableName>5 + 5</variableName>
+```
+translates to 
+```java
+variableName = 5 + 5;
+```
+
+### with variable values
+```xml
+<variableName>
+    <var1> + </var1>
+    <var2/>
+</variableName>
+```
+translates to 
+```java
+variableName = var1 + var2;
+```
+
 
 # Enjoy :]
